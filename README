@@ -1,0 +1,7 @@
+Library implementing much of the actual functionality of the fx2loader utility. I've separated it
+out into a library to make it easier to unit-test in isolation, and to make it easier to integrate
+with more complex applications.
+
+i2c.c    - Functions for converting to and from the Cypress I2C record format used by the FX2LP
+ram.c    - Functions for reading and writing the FX2LP's RAM
+eeprom.c - Functions for reading and writing the FX2LP's EEPROM
