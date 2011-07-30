@@ -17,8 +17,8 @@
 ROOT      := $(realpath ../..)
 DEPS      := error usbwrap buffer
 TYPE      := dll
-SUBDIRS   := tests fx2loader firmware
-PRE_BUILD := $(ROOT)/3rd/fx2lib/lib/fx2.lib
+SUBDIRS   := tests fx2loader #firmware
+#PRE_BUILD := $(ROOT)/3rd/fx2lib/lib/fx2.lib
 
 -include $(ROOT)/common/top.mk
 

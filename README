@@ -1,5 +1,14 @@
 The libfx2loader library allows you to program the Cypress FX2LP chip with new firmware. See
-http://bit.ly/fx2loader-api for API documentation.
+
+See http://bit.ly/fx2loader-api for the API docs.
+
+To build, first you need to install the MakeStuff Build Environment (http://bit.ly/makestuff) for
+your platform, then do:
+
+chris@wotan$ cd makestuff/libs
+chris@wotan$ ../common/msget.sh libfx2loader   # or msgit.sh if you want a local git repo
+chris@wotan$ cd libfx2loader
+chris@wotan$ make deps
 
 Extras in subdirectories:
   firmware - A minimal firmware implementing EEPROM reads/writes and a simple vendor command.
