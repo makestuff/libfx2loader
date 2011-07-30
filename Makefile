@@ -14,9 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-ROOT    := $(realpath ../..)
-DEPS    := error usbwrap buffer
-TYPE    := dll
-SUBDIRS := tests
+ROOT      := $(realpath ../..)
+DEPS      := error usbwrap buffer
+TYPE      := dll
+SUBDIRS   := tests fx2loader firmware
+PRE_BUILD := $(ROOT)/3rd/fx2lib/lib/fx2.lib
 
 -include $(ROOT)/common/top.mk
+
+$(ROOT)/3rd/fx2lib/lib/fx2.lib: $(ROOT)/3rd/fx2lib
+	make -C $<
