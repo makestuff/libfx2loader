@@ -1,7 +1,40 @@
-Library implementing much of the actual functionality of the fx2loader utility. I've separated it
-out into a library to make it easier to unit-test in isolation, and to make it easier to integrate
-with more complex applications.
+The libfx2loader library allows you to program the Cypress FX2LP chip with new firmware. See
+http://bit.ly/fx2loader-api for API documentation.
 
-i2c.c    - Functions for converting to and from the Cypress I2C record format used by the FX2LP
-ram.c    - Functions for reading and writing the FX2LP's RAM
-eeprom.c - Functions for reading and writing the FX2LP's EEPROM
+Extras in subdirectories:
+  firmware - A minimal firmware implementing EEPROM reads/writes and a simple vendor command.
+  fx2loader - A command-line interface for the library.
+
+The default FX2LP firmware (i.e with EEPROM isolated) enumerates as VID=0x04B4 (Cypress) and
+PID=0x8613 (FX2LP), and provides support for loading firmware into RAM. In order to write the EEPROM
+you need to load a firmware which supports EEPROM writes (e.g the provided firmware) into RAM first.
+
+You can use any file type (.hex/.ihx, .bix or .iic) as a source or destination, and it will be
+converted if necessary. The EEPROM native format is .iic and the RAM native format is .bix. The
+conversion between different representations is potentially lossy (e.g there may be some
+configuration data beyond the end of the I2C records in an EEPROM or .iic file, which will be lost
+if you convert it to a .hex file).
+
+If you're unsure about the suitability of a new firmware (wherever you got it from), it's a good
+idea to load it into RAM first to make sure it's not totally broken. Writing bad firmware to EEPROM
+will brick your device.
+
+If you manage to brick your device, you will need to isolate the EEPROM. Your board may provide a
+jumper for this purpose. Failing that you will need to cut the SDA track between the FX2LP and the
+EEPROM, load a good firmware into RAM, reconnect the EEPROM (e.g replace the jumper) and load the
+good firmware into EEPROM.
+
+Uploading your own SDCC-compiled firmware:
+    Write SDCC-generated I8HEX file to FX2LP's RAM:
+        fx2loader -v 0x04B4 -p 0x8613 firmware.hex
+    Write SDCC-generated I8HEX file to FX2LP's EEPROM (assuming current firmware supports EEPROM writes):
+        fx2loader -v 0x04B4 -p 0x8613 firmware.hex eeprom
+
+Backup and restore the existing firmware:
+    Backup FX2LP's existing 128kbit (16kbyte) EEPROM data:
+        fx2loader -v 0x04B4 -p 0x8613 eeprom:128 backup.iic
+    Restore FX2LP's 128kbit (16kbyte) EEPROM data from backup I2C file (assuming current firmware supports EEPROM writes):
+        fx2loader -v 0x04B4 -p 0x8613 backup.iic eeprom
+
+Convert between .hex files, .bix files and .iic files (file extensions are considered):
+    fx2loader -v 0x04B4 -p 0x8613 myfile.iic myfile.bix

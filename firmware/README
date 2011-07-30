@@ -1,0 +1,15 @@
+A minimal FX2LP firmware which provides vendor commands for a simple calculator operation (0x84) and
+an EEPROM read/write operation (0xA2).
+
+RAM load:
+  chris@wotan$ make
+  chris@wotan$ sudo fx2loader firmware.hex
+
+EEPROM load:
+  chris@wotan$ make FLAGS="-DEEPROM"
+  chris@wotan$ sudo fx2loader firmware.hex eeprom
+
+Calculator (this uses ucm & hxd from https://github.com/makestuff):
+  chris@wotan$ sudo ucm -v 0x04B4 -p 0x8613 -i 0x84 0x0010 0x0002 8 | hxd 
+  00000000 12 00 0E 00 20 00 08 00                         .... ...
+  (0x0012 = 0x0010 + 0x0002; 0x000E = 0x0010 - 0x0002 etc)
