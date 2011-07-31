@@ -24,9 +24,6 @@
 #include <liberror.h>
 #include <libbuffer.h>
 
-#define VID 0x04b4
-#define PID 0x8613
-
 typedef enum {
 	SRC_BAD,
 	SRC_EEPROM,
@@ -45,13 +42,12 @@ typedef enum {
 
 int main(int argc, char *argv[]) {
 
-	struct arg_uint *vidOpt = arg_uint0("v", "vid", "<vendorID>", "  vendor ID");
-	struct arg_uint *pidOpt = arg_uint0("p", "pid", "<productID>", " product ID");
-	struct arg_lit *helpOpt  = arg_lit0("h", "help", "            print this help and exit");
-	struct arg_str *srcOpt = arg_str1(NULL, NULL, "<source>", "            where to read from (<eeprom:<kbitSize> | fileName.hex | fileName.bix | fileName.iic>)");
-	struct arg_str *dstOpt = arg_str0(NULL, NULL, "<destination>", "         where to write to (<ram | eeprom | fileName.hex | fileName.bix | fileName.iic> - defaults to \"ram\")");
+	struct arg_str *vpOpt = arg_str1("v", "vidpid", "<VID:PID>", " vendor ID and product ID (e.g 04B4:8613)");
+	struct arg_lit *helpOpt  = arg_lit0("h", "help", "             print this help and exit");
+	struct arg_str *srcOpt = arg_str1(NULL, NULL, "<source>", "             where to read from (<eeprom:<kbitSize> | fileName.hex | fileName.bix | fileName.iic>)");
+	struct arg_str *dstOpt = arg_str0(NULL, NULL, "<destination>", "          where to write to (<ram | eeprom | fileName.hex | fileName.bix | fileName.iic> - defaults to \"ram\")");
 	struct arg_end *endOpt   = arg_end(20);
-	void* argTable[] = {vidOpt, pidOpt, helpOpt, srcOpt, dstOpt, endOpt};
+	void* argTable[] = {vpOpt, helpOpt, srcOpt, dstOpt, endOpt};
 	const char *progName = "fx2loader";
 	int returnCode = 0;
 	int numErrors;
@@ -61,7 +57,6 @@ int main(int argc, char *argv[]) {
 	struct Buffer sourceData = {0};
 	struct Buffer sourceMask = {0};
 	struct Buffer i2cBuffer = {0};
-	uint16 vid, pid;
 	const char *srcExt, *dstExt;
 	int eepromSize = 0;
 	struct usb_dev_handle *device = NULL;
@@ -133,12 +128,9 @@ int main(int argc, char *argv[]) {
 		dst = DST_RAM;
 	}
 
-	vid = vidOpt->count ? (uint16)vidOpt->ival[0] : VID;
-	pid = pidOpt->count ? (uint16)pidOpt->ival[0] : PID;
-
 	if ( src == SRC_EEPROM || dst == DST_EEPROM || dst == DST_RAM ) {
 		usbInitialise();
-		if ( usbOpenDevice(vid, pid, 1, 0, 0, &device, &error) ) {
+		if ( usbOpenDeviceVP(vpOpt->sval[0], 1, 0, 0, &device, &error) ) {
 			fprintf(stderr, "%s\n", error);
 			FAIL(5);
 		}
