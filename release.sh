@@ -1,35 +1,48 @@
+# Helper script for building the binary distribution. It's unlikely you'll need this unless you're
+# forking the project.
+#
 #!/bin/bash
 export LIB=libfx2loader
 export DATE=$(date +%Y%m%d)
 rm -rf ${LIB}-${DATE}
 mkdir ${LIB}-${DATE}
 
-# Linux binaries
-mkdir -p ${LIB}-${DATE}/linux/rel
-cp -rp linux/rel/*.so ${LIB}-${DATE}/linux/rel/
-cp -rp fx2loader/linux/rel/fx2loader ${LIB}-${DATE}/linux/rel/
-mkdir -p ${LIB}-${DATE}/linux/dbg
-cp -rp linux/dbg/*.so ${LIB}-${DATE}/linux/dbg/
-cp -rp fx2loader/linux/dbg/fx2loader ${LIB}-${DATE}/linux/dbg/
+# Linux i686 binaries
+mkdir -p ${LIB}-${DATE}/linux.i686/rel
+cp -rp linux.i686/rel/*.so ${LIB}-${DATE}/linux.i686/rel/
+mkdir -p ${LIB}-${DATE}/linux.i686/dbg
+cp -rp linux.i686/dbg/*.so ${LIB}-${DATE}/linux.i686/dbg/
+
+# Linux x86_64 binaries
+mkdir -p ${LIB}-${DATE}/linux.x86_64/rel
+cp -rp linux.x86_64/rel/*.so ${LIB}-${DATE}/linux.x86_64/rel/
+mkdir -p ${LIB}-${DATE}/linux.x86_64/dbg
+cp -rp linux.x86_64/dbg/*.so ${LIB}-${DATE}/linux.x86_64/dbg/
 
 # MacOS binaries
 mkdir -p ${LIB}-${DATE}/darwin/rel
 cp -rp darwin/rel/*.dylib ${LIB}-${DATE}/darwin/rel/
-cp -rp fx2loader/darwin/rel/fx2loader ${LIB}-${DATE}/darwin/rel/
 mkdir -p ${LIB}-${DATE}/darwin/dbg
 cp -rp darwin/dbg/*.dylib ${LIB}-${DATE}/darwin/dbg/
-cp -rp fx2loader/darwin/dbg/fx2loader ${LIB}-${DATE}/darwin/dbg/
 
 # Windows binaries
 mkdir -p ${LIB}-${DATE}/win32/rel
 cp -rp win32/rel/*.dll ${LIB}-${DATE}/win32/rel/
 cp -rp win32/rel/*.lib ${LIB}-${DATE}/win32/rel/
 cp -rp win32/rel/*.pdb ${LIB}-${DATE}/win32/rel/
-cp -rp fx2loader/win32/rel/fx2loader.exe ${LIB}-${DATE}/win32/rel/
 mkdir -p ${LIB}-${DATE}/win32/dbg
 cp -rp win32/dbg/*.dll ${LIB}-${DATE}/win32/dbg/
 cp -rp win32/dbg/*.lib ${LIB}-${DATE}/win32/dbg/
 cp -rp win32/dbg/*.pdb ${LIB}-${DATE}/win32/dbg/
+
+# FX2Loader binaries
+cp -rp fx2loader/linux.i686/rel/fx2loader ${LIB}-${DATE}/linux.i686/rel/
+cp -rp fx2loader/linux.i686/dbg/fx2loader ${LIB}-${DATE}/linux.i686/dbg/
+cp -rp fx2loader/linux.x86_64/rel/fx2loader ${LIB}-${DATE}/linux.x86_64/rel/
+cp -rp fx2loader/linux.x86_64/dbg/fx2loader ${LIB}-${DATE}/linux.x86_64/dbg/
+cp -rp fx2loader/darwin/rel/fx2loader ${LIB}-${DATE}/darwin/rel/
+cp -rp fx2loader/darwin/dbg/fx2loader ${LIB}-${DATE}/darwin/dbg/
+cp -rp fx2loader/win32/rel/fx2loader.exe ${LIB}-${DATE}/win32/rel/
 cp -rp fx2loader/win32/dbg/fx2loader.exe ${LIB}-${DATE}/win32/dbg/
 
 # Firmware
