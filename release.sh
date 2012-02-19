@@ -36,14 +36,15 @@ cp -rp win32/dbg/*.lib ${LIB}-${DATE}/win32/dbg/
 cp -rp win32/dbg/*.pdb ${LIB}-${DATE}/win32/dbg/
 
 # FX2Loader binaries
-cp -rp ../../apps/fx2loader/linux.i686/rel/fx2loader ${LIB}-${DATE}/linux.i686/rel/
-cp -rp ../../apps/fx2loader/linux.i686/dbg/fx2loader ${LIB}-${DATE}/linux.i686/dbg/
-cp -rp ../../apps/fx2loader/linux.x86_64/rel/fx2loader ${LIB}-${DATE}/linux.x86_64/rel/
-cp -rp ../../apps/fx2loader/linux.x86_64/dbg/fx2loader ${LIB}-${DATE}/linux.x86_64/dbg/
-cp -rp ../../apps/fx2loader/darwin/rel/fx2loader ${LIB}-${DATE}/darwin/rel/
-cp -rp ../../apps/fx2loader/darwin/dbg/fx2loader ${LIB}-${DATE}/darwin/dbg/
-cp -rp ../../apps/fx2loader/win32/rel/fx2loader.exe ${LIB}-${DATE}/win32/rel/
-cp -rp ../../apps/fx2loader/win32/dbg/fx2loader.exe ${LIB}-${DATE}/win32/dbg/
+export FX2CLI=../../apps/fx2loader
+cp -rp ${FX2CLI}/linux.i686/rel/libargtable2.so ${FX2CLI}/linux.i686/rel/fx2loader ${LIB}-${DATE}/linux.i686/rel/
+cp -rp ${FX2CLI}/linux.i686/dbg/libargtable2.so ${FX2CLI}/linux.i686/dbg/fx2loader ${LIB}-${DATE}/linux.i686/dbg/
+cp -rp ${FX2CLI}/linux.x86_64/rel/libargtable2.so ${FX2CLI}/linux.x86_64/rel/fx2loader ${LIB}-${DATE}/linux.x86_64/rel/
+cp -rp ${FX2CLI}/linux.x86_64/dbg/libargtable2.so ${FX2CLI}/linux.x86_64/dbg/fx2loader ${LIB}-${DATE}/linux.x86_64/dbg/
+cp -rp ${FX2CLI}/darwin/rel/libargtable2.dylib ${FX2CLI}/darwin/rel/fx2loader ${LIB}-${DATE}/darwin/rel/
+cp -rp ${FX2CLI}/darwin/dbg/libargtable2.dylib ${FX2CLI}/darwin/dbg/fx2loader ${LIB}-${DATE}/darwin/dbg/
+cp -rp ${FX2CLI}/win32/rel/argtable2.dll ${FX2CLI}/win32/rel/fx2loader.exe ${LIB}-${DATE}/win32/rel/
+cp -rp ${FX2CLI}/win32/dbg/argtable2.dll ${FX2CLI}/win32/dbg/fx2loader.exe ${LIB}-${DATE}/win32/dbg/
 
 # Firmware
 mkdir -p ${LIB}-${DATE}/firmware
