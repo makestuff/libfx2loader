@@ -18,6 +18,7 @@
 # this unless you're forking the project.
 #
 #!/bin/bash -x
+cp Makefile Makefile.old
 patch Makefile <<EOF
 --- Makefile.old	2012-03-04 16:06:03.521488029 +0000
 +++ Makefile.new	2012-03-04 16:06:30.325488544 +0000
@@ -28,4 +29,6 @@ patch Makefile <<EOF
 +PRE_BUILD := \$(ROOT)/3rd/fx2lib/lib/fx2.lib
 EOF
 make deps
+rm -f Makefile
+mv Makefile.old Makefile
 make MACHINE=i686 deps
