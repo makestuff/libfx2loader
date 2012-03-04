@@ -99,6 +99,9 @@ Source code here: https://github.com/makestuff/libfx2loader
 API docs here: http://bit.ly/fx2loader-api
 Example code here: http://bit.ly/fx2loader-ex
 
+The libfx2loader library is licensed under the LGPLv3; the fx2loader executable is licensed under
+the GPLv3.
+
 The default FX2LP firmware (i.e with EEPROM isolated) enumerates as VID=0x04B4 (Cypress) and
 PID=0x8613 (FX2LP), and provides support for loading firmware into RAM. In order to write the EEPROM
 you need to load a firmware which supports EEPROM writes (e.g the provided firmware) into RAM first.
