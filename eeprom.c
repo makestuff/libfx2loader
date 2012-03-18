@@ -70,7 +70,7 @@ DLLEXPORT(FX2Status) fx2ReadEEPROM(
 	int uStatus;
 	uint16 address = 0x0000;
 	uint8 *bufPtr;
-	if ( bufAppendZeros(i2cBuffer, numBytes, NULL, error) ) {
+	if ( bufAppendConst(i2cBuffer, 0x00, numBytes, error) ) {
 		errPrefix(error, "fx2ReadEEPROM()");
 		FAIL(FX2_BUF_ERR);
 	}

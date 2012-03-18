@@ -49,39 +49,32 @@ static I2CStatus dumpChunk(
 	struct Buffer *destination, const struct Buffer *sourceData, const struct Buffer *sourceMask,
 	uint16 address, uint16 length, const char **error)
 {
+	I2CStatus iStatus, returnCode = I2C_SUCCESS;
 	BufferStatus bStatus;
-	uint8 *chunkHeader;
 	size_t i, startBlock;
-	I2CStatus iStatus;
 	if ( length == 0 ) {
 		return I2C_SUCCESS;
 	}
 	while ( length > 1023 ) {
 		iStatus = dumpChunk(destination, sourceData, sourceMask, address, 1023, error);
+		CHECK_STATUS(iStatus, "dumpChunk()", iStatus);
 		address += 1023;
 		length -= 1023;
 	}
-	bStatus = bufAppendZeros(destination, 4, &chunkHeader, error);
-	if ( bStatus != BUF_SUCCESS ) {
-		errPrefix(error, "dumpChunk()");
-		return I2C_BUFFER_ERROR;
-	}
-	chunkHeader[0] = MSB(length);
-	chunkHeader[1] = LSB(length);
-	chunkHeader[2] = MSB(address);
-	chunkHeader[3] = LSB(address);
+	bStatus = bufAppendWordBE(destination, length, error);
+	CHECK_STATUS(bStatus, "dumpChunk()", I2C_BUFFER_ERROR);
+	bStatus = bufAppendWordBE(destination, address, error);
+	CHECK_STATUS(bStatus, "dumpChunk()", I2C_BUFFER_ERROR);
 	startBlock = destination->length;
 	bStatus = bufAppendBlock(destination, sourceData->data + address, length, error);
-	if ( bStatus != BUF_SUCCESS ) {
-		errPrefix(error, "dumpChunk()");
-		return I2C_BUFFER_ERROR;
-	}
+	CHECK_STATUS(bStatus, "dumpChunk()", I2C_BUFFER_ERROR);
 	for ( i = 0; i < length; i++ ) {
 		if ( sourceMask->data[address + i] == 0x00 ) {
 			destination->data[startBlock + i] = 0x00;
 		}
 	}
-	return I2C_SUCCESS;
+cleanup:
+	return returnCode;
 }
 
 // Build EEPROM records from the data/mask source buffers and write to the destination buffer.
@@ -185,17 +178,18 @@ DLLEXPORT(I2CStatus) i2cReadPromRecords(
 	struct Buffer *destData, struct Buffer *destMask, const struct Buffer *source,
 	const char **error)
 {
+	I2CStatus returnCode = I2C_SUCCESS;
 	uint16 chunkAddress, chunkLength;
 	const uint8 *ptr = source->data;
 	const uint8 *const ptrEnd = ptr + source->length;
 	BufferStatus bStatus;
 	if ( source->length < 8+5 || ptr[0] != 0xC2 ) {
 		errRender(error, "i2cReadPromRecords(): the EEPROM records appear to be corrupt");
-		return I2C_NOT_INITIALISED;
+		FAIL(I2C_NOT_INITIALISED);
 	}
 	if ( destData->length != 0 || destMask->length != 0 ) {
 		errRender(error, "i2cReadPromRecords(): the destination buffer is not empty");
-		return I2C_DEST_BUFFER_NOT_EMPTY;
+		FAIL(I2C_DEST_BUFFER_NOT_EMPTY);
 	}
 	ptr += 8;  // skip over the header
 	while ( ptr < ptrEnd ) {
@@ -206,39 +200,28 @@ DLLEXPORT(I2CStatus) i2cReadPromRecords(
 		}
 		chunkLength &= 0x03FF;
 		ptr += 4;
-		bStatus = bufCopyBlock(destData, chunkAddress, ptr, chunkLength, error);
-		if ( bStatus != BUF_SUCCESS ) {
-			errPrefix(error, "i2cReadPromRecords()");
-			return I2C_BUFFER_ERROR;
-		}
-		bStatus = bufSetBlock(destMask, chunkAddress, 0x01, chunkLength, error);
-		if ( bStatus != BUF_SUCCESS ) {
-			errPrefix(error, "i2cReadPromRecords()");
-			return I2C_BUFFER_ERROR;
-		}
+		bStatus = bufWriteBlock(destData, chunkAddress, ptr, chunkLength, error);
+		CHECK_STATUS(bStatus, "i2cReadPromRecords()", I2C_BUFFER_ERROR);
+		bStatus = bufWriteConst(destMask, chunkAddress, 0x01, chunkLength, error);
+		CHECK_STATUS(bStatus, "i2cReadPromRecords()", I2C_BUFFER_ERROR);
 		ptr += chunkLength;
 	}
-	return I2C_SUCCESS;
+cleanup:
+	return returnCode;
 }
 
 // Finalise the I2C buffers. This involves writing the final record which resets the chip.
 //
 DLLEXPORT(I2CStatus) i2cFinalise(struct Buffer *buf, const char **error) {
-	BufferStatus status;
-	uint8 *lastRecord;
+	I2CStatus returnCode = I2C_SUCCESS;
+	BufferStatus bStatus;
+	const uint8 lastRecord[] = {0x80, 0x01, 0xe6, 0x00, 0x00};
 	if ( buf->length < 8 || buf->data[0] != 0xC2 ) {
 		errRender(error, "i2cFinalise(): the buffer was not initialised");
-		return I2C_NOT_INITIALISED;
+		FAIL(I2C_NOT_INITIALISED);
 	}
-	status = bufAppendZeros(buf, 5, &lastRecord, error);
-	if ( status != BUF_SUCCESS ) {
-		errPrefix(error, "i2cFinalise()");
-		return I2C_BUFFER_ERROR;
-	}
-	lastRecord[0] = 0x80;  // This record means "write 0x00 to 0xE600 to reset the chip"
-	lastRecord[1] = 0x01;
-	lastRecord[2] = 0xe6;
-	lastRecord[3] = 0x00;
-	lastRecord[4] = 0x00;
-	return I2C_SUCCESS;
+	bStatus = bufAppendBlock(buf, lastRecord, 5, error);
+	CHECK_STATUS(bStatus, "i2cFinalise()", I2C_BUFFER_ERROR);
+cleanup:
+	return returnCode;
 }

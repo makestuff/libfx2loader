@@ -73,9 +73,9 @@ TEST(I2C_testRoundTrip) {
 		CHECK_EQUAL(BUF_SUCCESS, bStatus);
 		bStatus = bufInitialise(&dstMask, 16, 0x00, NULL);
 		CHECK_EQUAL(BUF_SUCCESS, bStatus);
-		bStatus = bufCopyBlock(&srcData, 0x00000000, expected, 16, NULL);
+		bStatus = bufWriteBlock(&srcData, 0x00000000, expected, 16, NULL);
 		CHECK_EQUAL(BUF_SUCCESS, bStatus);
-		bStatus = bufCopyBlock(&srcMask, 0x00000000, mask, 16, NULL);
+		bStatus = bufWriteBlock(&srcMask, 0x00000000, mask, 16, NULL);
 		CHECK_EQUAL(BUF_SUCCESS, bStatus);
 		iStatus = i2cWritePromRecords(&i2cBuffer, &srcData, &srcMask, NULL);
 		CHECK_EQUAL(I2C_SUCCESS, iStatus);
