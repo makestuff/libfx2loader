@@ -16,17 +16,12 @@
  */
 #include <makestuff.h>
 #include <libusbwrap.h>
-#ifdef WIN32
-	#include <lusb0_usb.h>
-#else
-	#include <usb.h>
-#endif
 #include <liberror.h>
 #include <libbuffer.h>
 #include "libfx2loader.h"
 
-#define A2_WRITE_ERROR "fx2WriteEEPROM(): This firmware does not seem to support EEPROM operations - try loading an appropriate firmware into RAM first\nDiagnostic information: failed writing %lu bytes to 0x%04X returnCode %d: %s"
-#define A2_READ_ERROR "fx2ReadEEPROM(): This firmware does not seem to support EEPROM operations - try loading an appropriate firmware into RAM first\nDiagnostic information: failed writing %lu bytes to 0x%04X returnCode %d: %s"
+#define A2_WRITE_ERROR "fx2WriteEEPROM(): This firmware does not seem to support EEPROM operations - try loading an appropriate firmware into RAM first"
+#define A2_READ_ERROR "fx2ReadEEPROM(): This firmware does not seem to support EEPROM operations - try loading an appropriate firmware into RAM first"
 #define BLOCK_SIZE 4096L
 
 // Write the supplied reader buffer to EEPROM, using the supplied VID/PID.
@@ -34,33 +29,36 @@
 DLLEXPORT(FX2Status) fx2WriteEEPROM(
 	struct usb_dev_handle *device, const uint8 *bufPtr, int numBytes, const char **error)
 {
-	FX2Status returnCode;
+	FX2Status returnCode = FX2_SUCCESS;
 	int uStatus;
 	uint16 address = 0x0000;
 	while ( numBytes > BLOCK_SIZE ) {
-		uStatus = usb_control_msg(
+		uStatus = usbControlWrite(
 			device,
-			(USB_ENDPOINT_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE),
-			0xA2, address, 0x0000, (char*)bufPtr, BLOCK_SIZE, 5000
+			0xA2,        // bRequest: EEPROM access
+			address,     // wValue: address to write
+			0x0000,      // wIndex: presently unused (will be A16)
+			bufPtr,      // data to be written
+			BLOCK_SIZE,  // wLength: number of bytes to be written
+			5000,        // timeout
+			error
 		);
-		if ( uStatus != BLOCK_SIZE ) {
-			errRender(error, A2_WRITE_ERROR, BLOCK_SIZE, address, uStatus, usb_strerror());
-			FAIL(FX2_USB_ERR);
-		}
+		CHECK_STATUS(uStatus, A2_WRITE_ERROR, FX2_USB_ERR);
 		numBytes -= BLOCK_SIZE;
 		bufPtr += BLOCK_SIZE;
 		address += BLOCK_SIZE;
 	}
-	uStatus = usb_control_msg(
+	uStatus = usbControlWrite(
 		device,
-		(USB_ENDPOINT_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE),
-		0xA2, address, 0x0000, (char*)bufPtr, numBytes, 5000
+		0xA2,      // bRequest: EEPROM access
+		address,   // wValue: address to write
+		0x0000,    // wIndex: presently unused (will be A16)
+		bufPtr,    // data to be written
+		numBytes,  // wLength: number of bytes to be written
+		5000,      // timeout
+		error
 	);
-	if ( uStatus != numBytes ) {
-		errRender(error, A2_WRITE_ERROR, numBytes, address, uStatus, usb_strerror());
-		FAIL(FX2_USB_ERR);
-	}
-	return FX2_SUCCESS;
+	CHECK_STATUS(uStatus, A2_WRITE_ERROR, FX2_USB_ERR);
 cleanup:
 	return returnCode;
 }
@@ -70,7 +68,7 @@ cleanup:
 DLLEXPORT(FX2Status) fx2ReadEEPROM(
 	struct usb_dev_handle *device, uint32 numBytes, struct Buffer *i2cBuffer, const char **error)
 {
-	FX2Status returnCode;
+	FX2Status returnCode = FX2_SUCCESS;
 	int uStatus;
 	uint16 address = 0x0000;
 	uint8 *bufPtr;
@@ -80,29 +78,32 @@ DLLEXPORT(FX2Status) fx2ReadEEPROM(
 	}
 	bufPtr = i2cBuffer->data;
 	while ( numBytes > BLOCK_SIZE ) {
-		uStatus = usb_control_msg(
+		uStatus = usbControlRead(
 			device,
-			(USB_ENDPOINT_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE),
-			0xA2, address, 0x0000, (char*)bufPtr, BLOCK_SIZE, 5000
+			0xA2,        // bRequest: EEPROM access
+			address,     // wValue: address to read
+			0x0000,      // wIndex: presently unused (will be A16)
+			bufPtr,      // data to be written
+		   BLOCK_SIZE,  // wLength: number of bytes to be written
+			5000,        // timeout
+			error
 		);
-		if ( uStatus != BLOCK_SIZE ) {
-			errRender(error, A2_READ_ERROR, BLOCK_SIZE, address, uStatus, usb_strerror());
-			FAIL(FX2_USB_ERR);
-		}
+		CHECK_STATUS(uStatus, A2_READ_ERROR, FX2_USB_ERR);
 		numBytes -= BLOCK_SIZE;
 		bufPtr += BLOCK_SIZE;
 		address += BLOCK_SIZE;
 	}
-	uStatus = usb_control_msg(
+	uStatus = usbControlRead(
 		device,
-		(USB_ENDPOINT_IN | USB_TYPE_VENDOR | USB_RECIP_DEVICE),
-		0xA2, address, 0x0000, (char*)bufPtr, numBytes, 5000
+		0xA2,      // bRequest: EEPROM access
+		address,   // wValue: address to read
+		0x0000,    // wIndex: presently unused (will be A16)
+		bufPtr,    // data to be written
+		numBytes,  // wLength: number of bytes to be written
+		5000,      // timeout
+		error
 	);
-	if ( uStatus != (int)numBytes ) {
-		errRender(error, A2_READ_ERROR, numBytes, address, uStatus, usb_strerror());
-		FAIL(FX2_USB_ERR);
-	}
-	return FX2_SUCCESS;
+	CHECK_STATUS(uStatus, A2_READ_ERROR, FX2_USB_ERR);
 cleanup:
 	return returnCode;
 }

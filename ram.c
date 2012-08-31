@@ -16,11 +16,6 @@
  */
 #include <makestuff.h>
 #include <libusbwrap.h>
-#ifdef WIN32
-	#include <lusb0_usb.h>
-#else
-	#include <usb.h>
-#endif
 #include <liberror.h>
 #include "libfx2loader.h"
 
@@ -29,61 +24,62 @@
 DLLEXPORT(FX2Status) fx2WriteRAM(
 	struct usb_dev_handle *device, const uint8 *bufPtr, int numBytes, const char **error)
 {
-	FX2Status returnCode;
+	FX2Status returnCode = FX2_SUCCESS;
 	int uStatus;
 	uint16 address = 0x0000;
-	char byte = 0x01;
-	uStatus = usb_control_msg(
+	uint8 byte = 0x01;
+	uStatus = usbControlWrite(
 		device,
-		(USB_ENDPOINT_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE),
-		0xA0, 0xE600, 0x0000, &byte, 1, 5000
+		0xA0,    // bRequest: RAM access
+		0xE600,  // wValue: address to write (FX2 CPUCS)
+		0x0000,  // wIndex: unused
+		&byte,   // data = 0x01: hold 8051 in reset
+		1,       // wLength: just one byte
+		5000,    // timeout
+		error
 	);
-	if ( uStatus != 1 ) {
-		errRender(
-			error,
-			"fx2WriteRAM(): Failed to put the CPU in reset - usb_control_msg() failed returnCode %d: %s",
-			uStatus, usb_strerror());
-		FAIL(FX2_USB_ERR);
-	}
+	CHECK_STATUS(uStatus, "fx2WriteRAM(): Failed to put the CPU in reset", FX2_USB_ERR);
 	while ( numBytes > 4096 ) {
-		uStatus = usb_control_msg(
+		uStatus = usbControlWrite(
 			device,
-			(USB_ENDPOINT_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE),
-			0xA0, address, 0x0000, (char*)bufPtr, 4096, 5000
+			0xA0,     // bRequest: RAM access
+			address,  // wValue: RAM address to write
+			0x0000,   // wIndex: unused
+			bufPtr,   // data to be written
+			4096,     // wLength: 4096 block
+			5000,     // timeout
+			error
 		);
-		if ( uStatus != 4096 ) {
-			errRender(
-				error,
-				"fx2WriteRAM(): Failed to write block of 4096 bytes at 0x%04X - usb_control_msg() failed returnCode %d: %s",
-				address, uStatus, usb_strerror());
-			FAIL(FX2_USB_ERR);
-		}
+		CHECK_STATUS(uStatus, "fx2WriteRAM(): Failed to write block of 4096 bytes", FX2_USB_ERR);
 		numBytes -= 4096;
 		bufPtr += 4096;
 		address += 4096;
 	}
-	uStatus = usb_control_msg(
+	uStatus = usbControlWrite(
 		device,
-		(USB_ENDPOINT_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE),
-		0xA0, address, 0x0000, (char*)bufPtr, numBytes, 5000
+		0xA0,      // bRequest: RAM access
+		address,   // wValue: RAM address to write
+		0x0000,    // wIndex: unused
+		bufPtr,    // data to be written
+		numBytes,  // wLength: remaining bytes
+		5000,      // timeout
+		error
 	);
-	if ( uStatus != numBytes ) {
-		errRender(
-			error,
-			"fx2WriteRAM(): Failed to write block of %d bytes at 0x%04X - usb_control_msg() failed returnCode %d: %s",
-			numBytes, address, uStatus, usb_strerror());
-		FAIL(FX2_USB_ERR);
-	}
+	CHECK_STATUS(uStatus, "fx2WriteRAM(): Failed to write final block", FX2_USB_ERR);
 
 	// Since this brings the FX2 out of reset, the host may get a 'failed' returnCode. We have to
 	// assume that it worked nevertheless.
 	byte = 0x00;
-	usb_control_msg(
+	usbControlWrite(
 		device,
-		(USB_ENDPOINT_OUT | USB_TYPE_VENDOR | USB_RECIP_DEVICE),
-		0xA0, 0xE600, 0x0000, &byte, 1, 5000
+		0xA0,    // bRequest: RAM access
+		0xE600,  // wValue: address to write (FX2 CPUCS)
+		0x0000,  // wIndex: unused
+		&byte,   // data = 0x00: bring 8051 out of reset
+		1,       // wLength: just one byte
+		5000,    // timeout
+		NULL
 	);
-	return FX2_SUCCESS;
 cleanup:
 	return returnCode;
 }
