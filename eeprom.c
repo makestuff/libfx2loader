@@ -50,12 +50,12 @@ DLLEXPORT(FX2Status) fx2WriteEEPROM(
 	}
 	uStatus = usbControlWrite(
 		device,
-		0xA2,      // bRequest: EEPROM access
-		address,   // wValue: address to write
-		0x0000,    // wIndex: presently unused (will be A16)
-		bufPtr,    // data to be written
-		numBytes,  // wLength: number of bytes to be written
-		5000,      // timeout
+		0xA2,              // bRequest: EEPROM access
+		address,           // wValue: address to write
+		0x0000,            // wIndex: presently unused (will be A16)
+		bufPtr,            // data to be written
+		(uint16)numBytes,  // wLength: number of bytes to be written
+		5000,              // timeout
 		error
 	);
 	CHECK_STATUS(uStatus, A2_WRITE_ERROR, FX2_USB_ERR);
@@ -95,12 +95,12 @@ DLLEXPORT(FX2Status) fx2ReadEEPROM(
 	}
 	uStatus = usbControlRead(
 		device,
-		0xA2,      // bRequest: EEPROM access
-		address,   // wValue: address to read
-		0x0000,    // wIndex: presently unused (will be A16)
-		bufPtr,    // data to be written
-		numBytes,  // wLength: number of bytes to be written
-		5000,      // timeout
+		0xA2,              // bRequest: EEPROM access
+		address,           // wValue: address to read
+		0x0000,            // wIndex: presently unused (will be A16)
+		bufPtr,            // data to be written
+		(uint16)numBytes,  // wLength: number of bytes to be written
+		5000,              // timeout
 		error
 	);
 	CHECK_STATUS(uStatus, A2_READ_ERROR, FX2_USB_ERR);

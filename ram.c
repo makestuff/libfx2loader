@@ -57,12 +57,12 @@ DLLEXPORT(FX2Status) fx2WriteRAM(
 	}
 	uStatus = usbControlWrite(
 		device,
-		0xA0,      // bRequest: RAM access
-		address,   // wValue: RAM address to write
-		0x0000,    // wIndex: unused
-		bufPtr,    // data to be written
-		numBytes,  // wLength: remaining bytes
-		5000,      // timeout
+		0xA0,              // bRequest: RAM access
+		address,           // wValue: RAM address to write
+		0x0000,            // wIndex: unused
+		bufPtr,            // data to be written
+		(uint16)numBytes,  // wLength: remaining bytes
+		5000,              // timeout
 		error
 	);
 	CHECK_STATUS(uStatus, "fx2WriteRAM(): Failed to write final block", FX2_USB_ERR);
