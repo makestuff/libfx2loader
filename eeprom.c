@@ -27,7 +27,7 @@
 // Write the supplied reader buffer to EEPROM, using the supplied VID/PID.
 //
 DLLEXPORT(FX2Status) fx2WriteEEPROM(
-	struct usb_dev_handle *device, const uint8 *bufPtr, int numBytes, const char **error)
+	struct USBDevice *device, const uint8 *bufPtr, int numBytes, const char **error)
 {
 	FX2Status returnCode = FX2_SUCCESS;
 	int uStatus;
@@ -66,7 +66,7 @@ cleanup:
 // Read from the EEPROM into the supplied buffer, using the supplied VID/PID.
 //
 DLLEXPORT(FX2Status) fx2ReadEEPROM(
-	struct usb_dev_handle *device, uint32 numBytes, struct Buffer *i2cBuffer, const char **error)
+	struct USBDevice *device, uint32 numBytes, struct Buffer *i2cBuffer, const char **error)
 {
 	FX2Status returnCode = FX2_SUCCESS;
 	int uStatus;

@@ -73,7 +73,7 @@ extern "C" {
 	#define CONFIG_BYTE_400KHZ (1<<0)
 
 	// Forward-declaration of the LibUSB handle
-	struct usb_dev_handle;
+	struct USBDevice;
 
 	// Forward-declaration of the Buffer struct
 	struct Buffer;
@@ -104,7 +104,7 @@ extern "C" {
 	 *     - \c FX2_USB_ERR if a USB error occurred.
 	 */
 	DLLEXPORT(FX2Status) fx2WriteRAM(
-		struct usb_dev_handle *device, const uint8 *bufPtr, int numBytes, const char **error
+		struct USBDevice *device, const uint8 *bufPtr, int numBytes, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
@@ -127,7 +127,7 @@ extern "C" {
 	 *     - \c FX2_USB_ERR if a USB error occurred.
 	 */
 	DLLEXPORT(FX2Status) fx2WriteEEPROM(
-		struct usb_dev_handle *device, const uint8 *bufPtr, int numBytes, const char **error
+		struct USBDevice *device, const uint8 *bufPtr, int numBytes, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
@@ -152,7 +152,7 @@ extern "C" {
 	 *     - \c FX2_BUF_ERR if an allocation error occurred.
 	 */
 	DLLEXPORT(FX2Status) fx2ReadEEPROM(
-		struct usb_dev_handle *device, uint32 numBytes, struct Buffer *i2cBuffer, const char **error
+		struct USBDevice *device, uint32 numBytes, struct Buffer *i2cBuffer, const char **error
 	) WARN_UNUSED_RESULT;
 	//@}
 

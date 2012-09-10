@@ -22,7 +22,7 @@
 // Write the supplied reader buffer to RAM, using the supplied VID/PID.
 //
 DLLEXPORT(FX2Status) fx2WriteRAM(
-	struct usb_dev_handle *device, const uint8 *bufPtr, int numBytes, const char **error)
+	struct USBDevice *device, const uint8 *bufPtr, int numBytes, const char **error)
 {
 	FX2Status returnCode = FX2_SUCCESS;
 	int uStatus;
