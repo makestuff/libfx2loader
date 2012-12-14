@@ -70,7 +70,7 @@ DLLEXPORT(FX2Status) fx2WriteRAM(
 	// Since this brings the FX2 out of reset, the host may get a 'failed' returnCode. We have to
 	// assume that it worked nevertheless.
 	byte = 0x00;
-	usbControlWrite(
+	uStatus = usbControlWrite(
 		device,
 		0xA0,    // bRequest: RAM access
 		0xE600,  // wValue: address to write (FX2 CPUCS)
