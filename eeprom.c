@@ -22,12 +22,12 @@
 
 #define A2_WRITE_ERROR "fx2WriteEEPROM(): This firmware does not seem to support EEPROM operations - try loading an appropriate firmware into RAM first"
 #define A2_READ_ERROR "fx2ReadEEPROM(): This firmware does not seem to support EEPROM operations - try loading an appropriate firmware into RAM first"
-#define BLOCK_SIZE 4096L
+#define BLOCK_SIZE 4096
 
 // Write the supplied reader buffer to EEPROM, using the supplied VID/PID.
 //
 DLLEXPORT(FX2Status) fx2WriteEEPROM(
-	struct USBDevice *device, const uint8 *bufPtr, int numBytes, const char **error)
+	struct USBDevice *device, const uint8 *bufPtr, uint32 numBytes, const char **error)
 {
 	FX2Status returnCode = FX2_SUCCESS;
 	int uStatus;

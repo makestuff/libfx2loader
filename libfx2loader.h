@@ -104,7 +104,7 @@ extern "C" {
 	 *     - \c FX2_USB_ERR if a USB error occurred.
 	 */
 	DLLEXPORT(FX2Status) fx2WriteRAM(
-		struct USBDevice *device, const uint8 *bufPtr, int numBytes, const char **error
+		struct USBDevice *device, const uint8 *bufPtr, uint32 numBytes, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**
@@ -127,7 +127,7 @@ extern "C" {
 	 *     - \c FX2_USB_ERR if a USB error occurred.
 	 */
 	DLLEXPORT(FX2Status) fx2WriteEEPROM(
-		struct USBDevice *device, const uint8 *bufPtr, int numBytes, const char **error
+		struct USBDevice *device, const uint8 *bufPtr, uint32 numBytes, const char **error
 	) WARN_UNUSED_RESULT;
 
 	/**

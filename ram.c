@@ -19,10 +19,12 @@
 #include <liberror.h>
 #include "libfx2loader.h"
 
+#define BLOCK_SIZE 4096
+
 // Write the supplied reader buffer to RAM, using the supplied VID/PID.
 //
 DLLEXPORT(FX2Status) fx2WriteRAM(
-	struct USBDevice *device, const uint8 *bufPtr, int numBytes, const char **error)
+	struct USBDevice *device, const uint8 *bufPtr, uint32 numBytes, const char **error)
 {
 	FX2Status returnCode = FX2_SUCCESS;
 	int uStatus;
@@ -39,21 +41,21 @@ DLLEXPORT(FX2Status) fx2WriteRAM(
 		error
 	);
 	CHECK_STATUS(uStatus, "fx2WriteRAM(): Failed to put the CPU in reset", FX2_USB_ERR);
-	while ( numBytes > 4096 ) {
+	while ( numBytes > BLOCK_SIZE ) {
 		uStatus = usbControlWrite(
 			device,
 			0xA0,     // bRequest: RAM access
 			address,  // wValue: RAM address to write
 			0x0000,   // wIndex: unused
 			bufPtr,   // data to be written
-			4096,     // wLength: 4096 block
+			BLOCK_SIZE,     // wLength: BLOCK_SIZE block
 			5000,     // timeout
 			error
 		);
-		CHECK_STATUS(uStatus, "fx2WriteRAM(): Failed to write block of 4096 bytes", FX2_USB_ERR);
-		numBytes -= 4096;
-		bufPtr += 4096;
-		address += 4096;
+		CHECK_STATUS(uStatus, "fx2WriteRAM(): Failed to write block of bytes", FX2_USB_ERR);
+		numBytes -= BLOCK_SIZE;
+		bufPtr += BLOCK_SIZE;
+		address += BLOCK_SIZE;
 	}
 	uStatus = usbControlWrite(
 		device,
