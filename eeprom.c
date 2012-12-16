@@ -32,12 +32,13 @@ DLLEXPORT(FX2Status) fx2WriteEEPROM(
 	FX2Status returnCode = FX2_SUCCESS;
 	int uStatus;
 	uint16 address = 0x0000;
+	uint16 bank = 0x0000;
 	while ( numBytes > BLOCK_SIZE ) {
 		uStatus = usbControlWrite(
 			device,
 			0xA2,        // bRequest: EEPROM access
 			address,     // wValue: address to write
-			0x0000,      // wIndex: presently unused (will be A16)
+			bank,        // wIndex: bank (currently only 0 & 1 supported by firmware)
 			bufPtr,      // data to be written
 			BLOCK_SIZE,  // wLength: number of bytes to be written
 			5000,        // timeout
@@ -47,12 +48,15 @@ DLLEXPORT(FX2Status) fx2WriteEEPROM(
 		numBytes -= BLOCK_SIZE;
 		bufPtr += BLOCK_SIZE;
 		address += BLOCK_SIZE;
+		if ( !address ) {
+			bank++;
+		}
 	}
 	uStatus = usbControlWrite(
 		device,
 		0xA2,              // bRequest: EEPROM access
 		address,           // wValue: address to write
-		0x0000,            // wIndex: presently unused (will be A16)
+		bank,              // wIndex: bank (currently only 0 & 1 supported by firmware)
 		bufPtr,            // data to be written
 		(uint16)numBytes,  // wLength: number of bytes to be written
 		5000,              // timeout
@@ -71,6 +75,7 @@ DLLEXPORT(FX2Status) fx2ReadEEPROM(
 	FX2Status returnCode = FX2_SUCCESS;
 	int uStatus;
 	uint16 address = 0x0000;
+	uint16 bank = 0x0000;
 	uint8 *bufPtr;
 	if ( bufAppendConst(i2cBuffer, 0x00, numBytes, error) ) {
 		errPrefix(error, "fx2ReadEEPROM()");
@@ -82,7 +87,7 @@ DLLEXPORT(FX2Status) fx2ReadEEPROM(
 			device,
 			0xA2,        // bRequest: EEPROM access
 			address,     // wValue: address to read
-			0x0000,      // wIndex: presently unused (will be A16)
+			bank,        // wIndex: bank (currently only 0 & 1 supported by firmware)
 			bufPtr,      // data to be written
 		   BLOCK_SIZE,  // wLength: number of bytes to be written
 			5000,        // timeout
@@ -92,12 +97,15 @@ DLLEXPORT(FX2Status) fx2ReadEEPROM(
 		numBytes -= BLOCK_SIZE;
 		bufPtr += BLOCK_SIZE;
 		address += BLOCK_SIZE;
+		if ( !address ) {
+			bank++;
+		}
 	}
 	uStatus = usbControlRead(
 		device,
 		0xA2,              // bRequest: EEPROM access
 		address,           // wValue: address to read
-		0x0000,            // wIndex: presently unused (will be A16)
+		bank,              // wIndex: bank (currently only 0 & 1 supported by firmware)
 		bufPtr,            // data to be written
 		(uint16)numBytes,  // wLength: number of bytes to be written
 		5000,              // timeout
