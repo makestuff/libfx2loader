@@ -19,6 +19,7 @@
 #include <liberror.h>
 #include <libbuffer.h>
 #include "libfx2loader.h"
+#include "vendorCommands.h"
 
 #define A2_WRITE_ERROR "fx2WriteEEPROM(): This firmware does not seem to support EEPROM operations - try loading an appropriate firmware into RAM first"
 #define A2_READ_ERROR "fx2ReadEEPROM(): This firmware does not seem to support EEPROM operations - try loading an appropriate firmware into RAM first"
@@ -36,12 +37,12 @@ DLLEXPORT(FX2Status) fx2WriteEEPROM(
 	while ( numBytes > BLOCK_SIZE ) {
 		uStatus = usbControlWrite(
 			device,
-			0xA2,        // bRequest: EEPROM access
-			address,     // wValue: address to write
-			bank,        // wIndex: bank (currently only 0 & 1 supported by firmware)
-			bufPtr,      // data to be written
-			BLOCK_SIZE,  // wLength: number of bytes to be written
-			5000,        // timeout
+			CMD_READ_WRITE_EEPROM, // bRequest: EEPROM access
+			address,               // wValue: address to write
+			bank,                  // wIndex: bank (currently only 0 & 1 supported by firmware)
+			bufPtr,                // data to be written
+			BLOCK_SIZE,            // wLength: number of bytes to be written
+			5000,                  // timeout
 			error
 		);
 		CHECK_STATUS(uStatus, A2_WRITE_ERROR, FX2_USB_ERR);
@@ -54,12 +55,12 @@ DLLEXPORT(FX2Status) fx2WriteEEPROM(
 	}
 	uStatus = usbControlWrite(
 		device,
-		0xA2,              // bRequest: EEPROM access
-		address,           // wValue: address to write
-		bank,              // wIndex: bank (currently only 0 & 1 supported by firmware)
-		bufPtr,            // data to be written
-		(uint16)numBytes,  // wLength: number of bytes to be written
-		5000,              // timeout
+		CMD_READ_WRITE_EEPROM, // bRequest: EEPROM access
+		address,               // wValue: address to write
+		bank,                  // wIndex: bank (currently only 0 & 1 supported by firmware)
+		bufPtr,                // data to be written
+		(uint16)numBytes,      // wLength: number of bytes to be written
+		5000,                  // timeout
 		error
 	);
 	CHECK_STATUS(uStatus, A2_WRITE_ERROR, FX2_USB_ERR);
@@ -85,12 +86,12 @@ DLLEXPORT(FX2Status) fx2ReadEEPROM(
 	while ( numBytes > BLOCK_SIZE ) {
 		uStatus = usbControlRead(
 			device,
-			0xA2,        // bRequest: EEPROM access
-			address,     // wValue: address to read
-			bank,        // wIndex: bank (currently only 0 & 1 supported by firmware)
-			bufPtr,      // data to be written
-		   BLOCK_SIZE,  // wLength: number of bytes to be written
-			5000,        // timeout
+			CMD_READ_WRITE_EEPROM, // bRequest: EEPROM access
+			address,               // wValue: address to read
+			bank,                  // wIndex: bank (currently only 0 & 1 supported by firmware)
+			bufPtr,                // data to be written
+		   BLOCK_SIZE,            // wLength: number of bytes to be written
+			5000,                  // timeout
 			error
 		);
 		CHECK_STATUS(uStatus, A2_READ_ERROR, FX2_USB_ERR);
@@ -103,12 +104,12 @@ DLLEXPORT(FX2Status) fx2ReadEEPROM(
 	}
 	uStatus = usbControlRead(
 		device,
-		0xA2,              // bRequest: EEPROM access
-		address,           // wValue: address to read
-		bank,              // wIndex: bank (currently only 0 & 1 supported by firmware)
-		bufPtr,            // data to be written
-		(uint16)numBytes,  // wLength: number of bytes to be written
-		5000,              // timeout
+		CMD_READ_WRITE_EEPROM, // bRequest: EEPROM access
+		address,               // wValue: address to read
+		bank,                  // wIndex: bank (currently only 0 & 1 supported by firmware)
+		bufPtr,                // data to be written
+		(uint16)numBytes,      // wLength: number of bytes to be written
+		5000,                  // timeout
 		error
 	);
 	CHECK_STATUS(uStatus, A2_READ_ERROR, FX2_USB_ERR);

@@ -19,6 +19,7 @@
 
 // Vendor commands
 #define CMD_CALCULATOR        0x80
+#define CMD_READ_WRITE_RAM    0xA0
 #define CMD_READ_WRITE_EEPROM 0xA2
 
 #endif

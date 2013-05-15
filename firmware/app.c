@@ -18,8 +18,8 @@
 #include <fx2macros.h>
 #include <delay.h>
 #include <setupdat.h>
-#include <vendorCommands.h>
 #include <makestuff.h>
+#include "../vendorCommands.h"
 #include "prom.h"
 #include "defs.h"
 
