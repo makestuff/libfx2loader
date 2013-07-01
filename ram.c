@@ -27,11 +27,10 @@
 DLLEXPORT(FX2Status) fx2WriteRAM(
 	struct USBDevice *device, const uint8 *bufPtr, uint32 numBytes, const char **error)
 {
-	FX2Status returnCode = FX2_SUCCESS;
-	int uStatus;
+	FX2Status retVal = FX2_SUCCESS;
 	uint16 address = 0x0000;
 	uint8 byte = 0x01;
-	uStatus = usbControlWrite(
+	USBStatus uStatus = usbControlWrite(
 		device,
 		CMD_READ_WRITE_RAM, // bRequest: RAM access
 		0xE600,             // wValue: address to write (FX2 CPUCS)
@@ -41,7 +40,7 @@ DLLEXPORT(FX2Status) fx2WriteRAM(
 		5000,               // timeout
 		error
 	);
-	CHECK_STATUS(uStatus, "fx2WriteRAM(): Failed to put the CPU in reset", FX2_USB_ERR);
+	CHECK_STATUS(uStatus, FX2_USB_ERR, cleanup, "fx2WriteRAM(): Failed to put the CPU in reset");
 	while ( numBytes > BLOCK_SIZE ) {
 		uStatus = usbControlWrite(
 			device,
@@ -53,11 +52,13 @@ DLLEXPORT(FX2Status) fx2WriteRAM(
 			5000,               // timeout
 			error
 		);
-		CHECK_STATUS(uStatus, "fx2WriteRAM(): Failed to write block of bytes", FX2_USB_ERR);
+		CHECK_STATUS(uStatus, FX2_USB_ERR, cleanup, "fx2WriteRAM(): Failed to write block of bytes");
 		numBytes -= BLOCK_SIZE;
 		bufPtr += BLOCK_SIZE;
-		address += BLOCK_SIZE;
+		address = (uint16)(address + BLOCK_SIZE);
 	}
+
+	// Write final chunk of data
 	uStatus = usbControlWrite(
 		device,
 		CMD_READ_WRITE_RAM, // bRequest: RAM access
@@ -68,10 +69,12 @@ DLLEXPORT(FX2Status) fx2WriteRAM(
 		5000,               // timeout
 		error
 	);
-	CHECK_STATUS(uStatus, "fx2WriteRAM(): Failed to write final block", FX2_USB_ERR);
+	CHECK_STATUS(uStatus, FX2_USB_ERR, cleanup, "fx2WriteRAM(): Failed to write final block");
 
-	// Since this brings the FX2 out of reset, the host may get a 'failed' returnCode. We have to
-	// assume that it worked nevertheless.
+	// There's an unavoidable race condition here: this command brings the FX2 out of reset, which
+	// causes it to drop off the bus for renumeration. It may drop off before or after the host
+	// gets its acknowledgement, so we cannot trust the return code. We have no choice but to
+	// assume it worked.
 	byte = 0x00;
 	uStatus = usbControlWrite(
 		device,
@@ -84,5 +87,5 @@ DLLEXPORT(FX2Status) fx2WriteRAM(
 		NULL
 	);
 cleanup:
-	return returnCode;
+	return retVal;
 }

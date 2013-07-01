@@ -15,13 +15,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <stddef.h>
+#include <assert.h>
 #include <makestuff.h>
 #include <liberror.h>
 #include <libbuffer.h>
 #include "libfx2loader.h"
 
-#define LSB(x) ((x) & 0xFF)
-#define MSB(x) ((x) >> 8)
+#define LSB(x) (uint8)((x) & 0xFF)
+#define MSB(x) (uint8)((x) >> 8)
 
 // Initialise the buffer as a C2 loader, using supplied values. It seems like for C2 loaders the
 // values of vid & pid are never used though. The configByte has only two bits - bit zero selects
@@ -30,6 +31,7 @@
 DLLEXPORT(void) i2cInitialise(
 	struct Buffer *buf, uint16 vid, uint16 pid, uint16 did, uint8 configByte)
 {
+	assert(buf->capacity >= 8);
 	buf->length = 8;
 	buf->data[0] = 0xC2;
 	buf->data[1] = LSB(vid);
@@ -49,32 +51,32 @@ static I2CStatus dumpChunk(
 	struct Buffer *destination, const struct Buffer *sourceData, const struct Buffer *sourceMask,
 	uint16 address, uint16 length, const char **error)
 {
-	I2CStatus iStatus, returnCode = I2C_SUCCESS;
+	I2CStatus retVal = I2C_SUCCESS;
 	BufferStatus bStatus;
 	size_t i, startBlock;
 	if ( length == 0 ) {
 		return I2C_SUCCESS;
 	}
 	while ( length > 1023 ) {
-		iStatus = dumpChunk(destination, sourceData, sourceMask, address, 1023, error);
-		CHECK_STATUS(iStatus, "dumpChunk()", iStatus);
-		address += 1023;
-		length -= 1023;
+		retVal = dumpChunk(destination, sourceData, sourceMask, address, 1023, error);
+		CHECK_STATUS(retVal, retVal, cleanup, "dumpChunk()");
+		address = (uint16)(address + 1023);
+		length = (uint16)(length - 1023);
 	}
 	bStatus = bufAppendWordBE(destination, length, error);
-	CHECK_STATUS(bStatus, "dumpChunk()", I2C_BUFFER_ERROR);
+	CHECK_STATUS(bStatus, I2C_BUFFER_ERROR, cleanup, "dumpChunk()");
 	bStatus = bufAppendWordBE(destination, address, error);
-	CHECK_STATUS(bStatus, "dumpChunk()", I2C_BUFFER_ERROR);
+	CHECK_STATUS(bStatus, I2C_BUFFER_ERROR, cleanup, "dumpChunk()");
 	startBlock = destination->length;
 	bStatus = bufAppendBlock(destination, sourceData->data + address, length, error);
-	CHECK_STATUS(bStatus, "dumpChunk()", I2C_BUFFER_ERROR);
+	CHECK_STATUS(bStatus, I2C_BUFFER_ERROR, cleanup, "dumpChunk()");
 	for ( i = 0; i < length; i++ ) {
 		if ( sourceMask->data[address + i] == 0x00 ) {
 			destination->data[startBlock + i] = 0x00;
 		}
 	}
 cleanup:
-	return returnCode;
+	return retVal;
 }
 
 // Build EEPROM records from the data/mask source buffers and write to the destination buffer.
@@ -83,14 +85,11 @@ DLLEXPORT(I2CStatus) i2cWritePromRecords(
 	struct Buffer *destination, const struct Buffer *sourceData, const struct Buffer *sourceMask,
 	const char **error)
 {
-	uint16 i, chunkStart;
-	I2CStatus status;
-	if ( destination->length != 8 || destination->data[0] != 0xC2 ) {
-		errRender(error, "i2cWritePromRecords(): the buffer was not initialised");
-		return I2C_NOT_INITIALISED;
-	}
-
-	i = 0;
+	I2CStatus retVal = I2C_SUCCESS;
+	uint16 i = 0, chunkStart;
+	CHECK_STATUS(
+		destination->length != 8 || destination->data[0] != 0xC2, I2C_NOT_INITIALISED, cleanup,
+		"i2cWritePromRecords(): the buffer was not initialised");
 	while ( !sourceMask->data[i] && i < sourceData->length ) {
 		i++;
 	}
@@ -108,13 +107,11 @@ DLLEXPORT(I2CStatus) i2cWritePromRecords(
 			i++;
 		}
 		if ( i == sourceData->length ) {
-			status = dumpChunk(
+			retVal = dumpChunk(
 				destination, sourceData, sourceMask, chunkStart,
-				(uint16)sourceData->length - chunkStart, error);
-			if ( status != I2C_SUCCESS ) {
-				return status;
-			}
-			break;
+				(uint16)(sourceData->length - chunkStart), error);
+			CHECK_STATUS(retVal, retVal, cleanup, "i2cWritePromRecords()");
+			break;  // out of do...while
 		}
 
 		// Now check: is this run of zeroes worth splitting the block for?
@@ -132,15 +129,13 @@ DLLEXPORT(I2CStatus) i2cWritePromRecords(
 			{
 				// Yes, let's split it - dump the current block and start a fresh one
 				//
-				status = dumpChunk(
-					destination, sourceData, sourceMask, chunkStart, i - chunkStart, error);
-				if ( status != I2C_SUCCESS ) {
-					return status;
-				}
+				retVal = dumpChunk(
+					destination, sourceData, sourceMask, chunkStart, (uint16)(i - chunkStart), error);
+				CHECK_STATUS(retVal, retVal, cleanup, "i2cWritePromRecords()");
 				
 				// Skip these four...we know they're zero
 				//
-				i += 4;
+				i = (uint16)(i + 4);
 				
 				// Find the next block of ones
 				//
@@ -158,17 +153,16 @@ DLLEXPORT(I2CStatus) i2cWritePromRecords(
 		} else {
 			// We are within four bytes of the end - include the remainder, whatever it is
 			//
-			status = dumpChunk(
+			retVal = dumpChunk(
 				destination, sourceData, sourceMask, chunkStart,
-				(uint16)sourceMask->length - chunkStart, error);
-			if ( status != I2C_SUCCESS ) {
-				return status;
-			}
-			break;
+				(uint16)(sourceMask->length - chunkStart), error);
+			CHECK_STATUS(retVal, retVal, cleanup, "i2cWritePromRecords()");
+			break; // out of do...while
 		}
 	} while ( i < sourceData->length );
-	
-	return I2C_SUCCESS;
+
+cleanup:
+	return retVal;
 }
 
 // Read EEPROM records from the source buffer and write the decoded data to the data/mask
@@ -178,50 +172,47 @@ DLLEXPORT(I2CStatus) i2cReadPromRecords(
 	struct Buffer *destData, struct Buffer *destMask, const struct Buffer *source,
 	const char **error)
 {
-	I2CStatus returnCode = I2C_SUCCESS;
+	I2CStatus retVal = I2C_SUCCESS;
 	uint16 chunkAddress, chunkLength;
 	const uint8 *ptr = source->data;
 	const uint8 *const ptrEnd = ptr + source->length;
 	BufferStatus bStatus;
-	if ( source->length < 8+5 || ptr[0] != 0xC2 ) {
-		errRender(error, "i2cReadPromRecords(): the EEPROM records appear to be corrupt");
-		FAIL(I2C_NOT_INITIALISED);
-	}
-	if ( destData->length != 0 || destMask->length != 0 ) {
-		errRender(error, "i2cReadPromRecords(): the destination buffer is not empty");
-		FAIL(I2C_DEST_BUFFER_NOT_EMPTY);
-	}
+	CHECK_STATUS(
+		source->length < 8+5 || ptr[0] != 0xC2, I2C_NOT_INITIALISED, cleanup,
+		"i2cReadPromRecords(): the EEPROM records appear to be corrupt/uninitialised");
+	CHECK_STATUS(
+		destData->length != 0 || destMask->length != 0, I2C_DEST_BUFFER_NOT_EMPTY, cleanup,
+		"i2cReadPromRecords(): the destination buffer is not empty");
 	ptr += 8;  // skip over the header
 	while ( ptr < ptrEnd ) {
-		chunkLength = ((ptr[0] << 8) + ptr[1]);
-		chunkAddress = (ptr[2] << 8) + ptr[3];
+		chunkLength = (uint16)((ptr[0] << 8) + ptr[1]);
+		chunkAddress = (uint16)((ptr[2] << 8) + ptr[3]);
 		if ( chunkLength & 0x8000 ) {
 			break;
 		}
 		chunkLength &= 0x03FF;
 		ptr += 4;
 		bStatus = bufWriteBlock(destData, chunkAddress, ptr, chunkLength, error);
-		CHECK_STATUS(bStatus, "i2cReadPromRecords()", I2C_BUFFER_ERROR);
+		CHECK_STATUS(bStatus, I2C_BUFFER_ERROR, cleanup, "i2cReadPromRecords()");
 		bStatus = bufWriteConst(destMask, chunkAddress, 0x01, chunkLength, error);
-		CHECK_STATUS(bStatus, "i2cReadPromRecords()", I2C_BUFFER_ERROR);
+		CHECK_STATUS(bStatus, I2C_BUFFER_ERROR, cleanup, "i2cReadPromRecords()");
 		ptr += chunkLength;
 	}
 cleanup:
-	return returnCode;
+	return retVal;
 }
 
 // Finalise the I2C buffers. This involves writing the final record which resets the chip.
 //
 DLLEXPORT(I2CStatus) i2cFinalise(struct Buffer *buf, const char **error) {
-	I2CStatus returnCode = I2C_SUCCESS;
+	I2CStatus retVal = I2C_SUCCESS;
 	BufferStatus bStatus;
 	const uint8 lastRecord[] = {0x80, 0x01, 0xe6, 0x00, 0x00};
-	if ( buf->length < 8 || buf->data[0] != 0xC2 ) {
-		errRender(error, "i2cFinalise(): the buffer was not initialised");
-		FAIL(I2C_NOT_INITIALISED);
-	}
+	CHECK_STATUS(
+		buf->length < 8 || buf->data[0] != 0xC2, I2C_NOT_INITIALISED, cleanup,
+		"i2cFinalise(): the buffer was not initialised");
 	bStatus = bufAppendBlock(buf, lastRecord, 5, error);
-	CHECK_STATUS(bStatus, "i2cFinalise()", I2C_BUFFER_ERROR);
+	CHECK_STATUS(bStatus, I2C_BUFFER_ERROR, cleanup, "i2cFinalise()");
 cleanup:
-	return returnCode;
+	return retVal;
 }

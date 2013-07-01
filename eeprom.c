@@ -21,8 +21,7 @@
 #include "libfx2loader.h"
 #include "vendorCommands.h"
 
-#define A2_WRITE_ERROR "fx2WriteEEPROM(): This firmware does not seem to support EEPROM operations - try loading an appropriate firmware into RAM first"
-#define A2_READ_ERROR "fx2ReadEEPROM(): This firmware does not seem to support EEPROM operations - try loading an appropriate firmware into RAM first"
+#define A2_ERROR ": This firmware does not seem to support EEPROM operations - try loading an appropriate firmware into RAM first"
 #define BLOCK_SIZE 4096
 
 // Write the supplied reader buffer to EEPROM, using the supplied VID/PID.
@@ -30,8 +29,8 @@
 DLLEXPORT(FX2Status) fx2WriteEEPROM(
 	struct USBDevice *device, const uint8 *bufPtr, uint32 numBytes, const char **error)
 {
-	FX2Status returnCode = FX2_SUCCESS;
-	int uStatus;
+	FX2Status retVal = FX2_SUCCESS;
+	USBStatus uStatus;
 	uint16 address = 0x0000;
 	uint16 bank = 0x0000;
 	while ( numBytes > BLOCK_SIZE ) {
@@ -45,10 +44,10 @@ DLLEXPORT(FX2Status) fx2WriteEEPROM(
 			5000,                  // timeout
 			error
 		);
-		CHECK_STATUS(uStatus, A2_WRITE_ERROR, FX2_USB_ERR);
+		CHECK_STATUS(uStatus, FX2_USB_ERR, cleanup, "fx2WriteEEPROM()"A2_ERROR);
 		numBytes -= BLOCK_SIZE;
 		bufPtr += BLOCK_SIZE;
-		address += BLOCK_SIZE;
+		address = (uint16)(address + BLOCK_SIZE);
 		if ( !address ) {
 			bank++;
 		}
@@ -63,9 +62,9 @@ DLLEXPORT(FX2Status) fx2WriteEEPROM(
 		5000,                  // timeout
 		error
 	);
-	CHECK_STATUS(uStatus, A2_WRITE_ERROR, FX2_USB_ERR);
+	CHECK_STATUS(uStatus, FX2_USB_ERR, cleanup, "fx2WriteEEPROM()"A2_ERROR);
 cleanup:
-	return returnCode;
+	return retVal;
 }
 
 // Read from the EEPROM into the supplied buffer, using the supplied VID/PID.
@@ -73,15 +72,14 @@ cleanup:
 DLLEXPORT(FX2Status) fx2ReadEEPROM(
 	struct USBDevice *device, uint32 numBytes, struct Buffer *i2cBuffer, const char **error)
 {
-	FX2Status returnCode = FX2_SUCCESS;
-	int uStatus;
+	FX2Status retVal = FX2_SUCCESS;
+	USBStatus uStatus;
+	BufferStatus bStatus;
 	uint16 address = 0x0000;
 	uint16 bank = 0x0000;
 	uint8 *bufPtr;
-	if ( bufAppendConst(i2cBuffer, 0x00, numBytes, error) ) {
-		errPrefix(error, "fx2ReadEEPROM()");
-		FAIL(FX2_BUF_ERR);
-	}
+	bStatus = bufAppendConst(i2cBuffer, 0x00, numBytes, error);
+	CHECK_STATUS(bStatus, FX2_BUF_ERR, cleanup, "fx2ReadEEPROM()");
 	bufPtr = i2cBuffer->data;
 	while ( numBytes > BLOCK_SIZE ) {
 		uStatus = usbControlRead(
@@ -94,10 +92,10 @@ DLLEXPORT(FX2Status) fx2ReadEEPROM(
 			5000,                  // timeout
 			error
 		);
-		CHECK_STATUS(uStatus, A2_READ_ERROR, FX2_USB_ERR);
+		CHECK_STATUS(uStatus, FX2_USB_ERR, cleanup, "fx2WriteEEPROM()"A2_ERROR);
 		numBytes -= BLOCK_SIZE;
 		bufPtr += BLOCK_SIZE;
-		address += BLOCK_SIZE;
+		address = (uint16)(address + BLOCK_SIZE);
 		if ( !address ) {
 			bank++;
 		}
@@ -112,7 +110,7 @@ DLLEXPORT(FX2Status) fx2ReadEEPROM(
 		5000,                  // timeout
 		error
 	);
-	CHECK_STATUS(uStatus, A2_READ_ERROR, FX2_USB_ERR);
+	CHECK_STATUS(uStatus, FX2_USB_ERR, cleanup, "fx2WriteEEPROM()"A2_ERROR);
 cleanup:
-	return returnCode;
+	return retVal;
 }
