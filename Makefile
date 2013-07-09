@@ -23,4 +23,4 @@ SUBDIRS   := tests #firmware
 -include $(ROOT)/common/top.mk
 
 $(ROOT)/3rd/fx2lib/lib/fx2.lib: $(ROOT)/3rd/fx2lib
-	make -C $<
+	make AS8051=asx8051 -C $<
