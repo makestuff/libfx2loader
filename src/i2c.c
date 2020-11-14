@@ -16,10 +16,10 @@
  */
 #include <stddef.h>
 #include <assert.h>
-#include <makestuff.h>
-#include <liberror.h>
-#include <libbuffer.h>
-#include "libfx2loader.h"
+#include <makestuff/common.h>
+#include <makestuff/liberror.h>
+#include <makestuff/libbuffer.h>
+#include <makestuff/libfx2loader.h>
 
 #define LSB(x) (uint8)((x) & 0xFF)
 #define MSB(x) (uint8)((x) >> 8)
@@ -90,7 +90,7 @@ DLLEXPORT(I2CStatus) i2cWritePromRecords(
 	CHECK_STATUS(
 		destination->length != 8 || destination->data[0] != 0xC2, I2C_NOT_INITIALISED, cleanup,
 		"i2cWritePromRecords(): the buffer was not initialised");
-	while ( !sourceMask->data[i] && i < sourceData->length ) {
+	while ( i < sourceData->length && !sourceMask->data[i] ) {
 		i++;
 	}
 	if ( i == sourceData->length ) {
@@ -103,7 +103,7 @@ DLLEXPORT(I2CStatus) i2cWritePromRecords(
 	do {
 		// Find the end of this block of ones
 		//
-		while ( sourceMask->data[i] && i < sourceData->length ) {
+		while ( i < sourceData->length && sourceMask->data[i] ) {
 			i++;
 		}
 		if ( i == sourceData->length ) {

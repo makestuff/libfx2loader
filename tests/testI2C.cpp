@@ -14,12 +14,11 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <string.h>
-#include <UnitTest++.h>
-#include <makestuff.h>
-#include <libbuffer.h>
-#include "../libfx2loader.h"
-#include "../libfx2loader.h"
+#include <cstring>
+#include <gtest/gtest.h>
+#include <makestuff/common.h>
+#include <makestuff/libbuffer.h>
+#include <makestuff/libfx2loader.h>
 
 #define VID 0x04b4
 #define PID 0x8613
@@ -28,23 +27,23 @@
 #define LSB(x) (x & 0xFF)
 #define MSB(x) (x >> 8)
 
-TEST(I2C_testInitialise) {
+TEST(I2C, testInitialise) {
 	Buffer i2cBuffer;
 	I2CStatus iStatus;
 	BufferStatus bStatus;
 	const uint8 expected[] = {0xC2, LSB(VID), MSB(VID), LSB(PID), MSB(PID), LSB(DID), MSB(DID), CONFIG_BYTE_400KHZ, 0x80, 0x01, 0xE6, 0x00, 0x00};
 	bStatus = bufInitialise(&i2cBuffer, 1024, 0x00, NULL);
-	CHECK_EQUAL(BUF_SUCCESS, bStatus);
+	ASSERT_EQ(BUF_SUCCESS, bStatus);
 	i2cInitialise(&i2cBuffer, VID, PID, DID, CONFIG_BYTE_400KHZ);
 	iStatus = i2cFinalise(&i2cBuffer, NULL);
-	CHECK_EQUAL(I2C_SUCCESS, iStatus);
-	CHECK_EQUAL(8UL+5UL, i2cBuffer.length);
-	CHECK_EQUAL(1024UL, i2cBuffer.capacity);
-	CHECK_ARRAY_EQUAL(expected, i2cBuffer.data, 8+5);
+	ASSERT_EQ(I2C_SUCCESS, iStatus);
+	ASSERT_EQ(8UL+5UL, i2cBuffer.length);
+	ASSERT_EQ(1024UL, i2cBuffer.capacity);
+	ASSERT_EQ(std::memcmp(expected, i2cBuffer.data, 8+5), 0);
 	bufDestroy(&i2cBuffer);
 }
 
-TEST(I2C_testRoundTrip) {
+TEST(I2C, testRoundTrip) {
 	uint32 i, j;
 	Buffer i2cBuffer, srcData, srcMask, dstData, dstMask;
 	BufferStatus bStatus;
@@ -63,27 +62,27 @@ TEST(I2C_testRoundTrip) {
 			}
 		}
 		bStatus = bufInitialise(&i2cBuffer, 1024, 0x00, NULL);
-		CHECK_EQUAL(BUF_SUCCESS, bStatus);
+		ASSERT_EQ(BUF_SUCCESS, bStatus);
 		i2cInitialise(&i2cBuffer, VID, PID, DID, CONFIG_BYTE_400KHZ);
 		bStatus = bufInitialise(&srcData, 16, 0x00, NULL);
-		CHECK_EQUAL(BUF_SUCCESS, bStatus);
+		ASSERT_EQ(BUF_SUCCESS, bStatus);
 		bStatus = bufInitialise(&dstData, 16, 0x00, NULL);
-		CHECK_EQUAL(BUF_SUCCESS, bStatus);
+		ASSERT_EQ(BUF_SUCCESS, bStatus);
 		bStatus = bufInitialise(&srcMask, 16, 0x00, NULL);
-		CHECK_EQUAL(BUF_SUCCESS, bStatus);
+		ASSERT_EQ(BUF_SUCCESS, bStatus);
 		bStatus = bufInitialise(&dstMask, 16, 0x00, NULL);
-		CHECK_EQUAL(BUF_SUCCESS, bStatus);
+		ASSERT_EQ(BUF_SUCCESS, bStatus);
 		bStatus = bufWriteBlock(&srcData, 0x00000000, expected, 16, NULL);
-		CHECK_EQUAL(BUF_SUCCESS, bStatus);
+		ASSERT_EQ(BUF_SUCCESS, bStatus);
 		bStatus = bufWriteBlock(&srcMask, 0x00000000, mask, 16, NULL);
-		CHECK_EQUAL(BUF_SUCCESS, bStatus);
+		ASSERT_EQ(BUF_SUCCESS, bStatus);
 		iStatus = i2cWritePromRecords(&i2cBuffer, &srcData, &srcMask, NULL);
-		CHECK_EQUAL(I2C_SUCCESS, iStatus);
+		ASSERT_EQ(I2C_SUCCESS, iStatus);
 		iStatus = i2cFinalise(&i2cBuffer, NULL);
-		CHECK_EQUAL(I2C_SUCCESS, iStatus);
+		ASSERT_EQ(I2C_SUCCESS, iStatus);
 		iStatus = i2cReadPromRecords(&dstData, &dstMask, &i2cBuffer, NULL);
-		CHECK_EQUAL(I2C_SUCCESS, iStatus);
-		CHECK_ARRAY_EQUAL(expected, dstData.data, 16);
+		ASSERT_EQ(I2C_SUCCESS, iStatus);
+		ASSERT_EQ(std::memcmp(expected, dstData.data, 16), 0);
 		bufDestroy(&dstMask);
 		bufDestroy(&srcMask);
 		bufDestroy(&dstData);
@@ -92,24 +91,24 @@ TEST(I2C_testRoundTrip) {
 	}
 }
 
-TEST(I2C_testWPRNoInit) {
+TEST(I2C, testWPRNoInit) {
 	Buffer i2cBuffer;
 	I2CStatus iStatus;
 	BufferStatus bStatus;
 	bStatus = bufInitialise(&i2cBuffer, 8, 0x00, NULL);
-	CHECK_EQUAL(BUF_SUCCESS, bStatus);
+	ASSERT_EQ(BUF_SUCCESS, bStatus);
 	iStatus = i2cWritePromRecords(&i2cBuffer, NULL, NULL, NULL);
-	CHECK_EQUAL(I2C_NOT_INITIALISED, iStatus);
+	ASSERT_EQ(I2C_NOT_INITIALISED, iStatus);
 	bufDestroy(&i2cBuffer);
 }
 
-TEST(I2C_testFinaliseNoInit) {
+TEST(I2C, testFinaliseNoInit) {
 	Buffer buf;
 	I2CStatus iStatus;
 	BufferStatus bStatus;
 	bStatus = bufInitialise(&buf, 8, 0x00, NULL);
-	CHECK_EQUAL(BUF_SUCCESS, bStatus);
+	ASSERT_EQ(BUF_SUCCESS, bStatus);
 	iStatus = i2cFinalise(&buf, NULL);
-	CHECK_EQUAL(I2C_NOT_INITIALISED, iStatus);
+	ASSERT_EQ(I2C_NOT_INITIALISED, iStatus);
 	bufDestroy(&buf);
 }

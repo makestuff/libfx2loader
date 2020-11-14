@@ -30,7 +30,7 @@
 #ifndef LIBFX2LOADER_H
 #define LIBFX2LOADER_H
 
-#include <makestuff.h>
+#include <makestuff/common.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,0 +1,15 @@
+A simple command-line wrapper for the libfx2loader library.
+
+chris@wotan$ fx2loader --help
+FX2Loader Copyright (C) 2009-2011 Chris McClelland
+
+Usage: fx2loader [-h] [-v <vendorID>] [-p <productID>] <source> [<destination>]
+
+Upload code to the Cypress FX2LP.
+
+  -v, --vid=<vendorID>   vendor ID
+  -p, --pid=<productID>  product ID
+  -h, --help             print this help and exit
+  <source>               where to read from (<eeprom:<kbitSize> | fileName.hex | fileName.bix | fileName.iic>)
+  <destination>          where to write to (<ram | eeprom | fileName.hex | fileName.bix | fileName.iic> - defaults to "ram")
+chris@wotan$

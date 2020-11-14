@@ -14,11 +14,11 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include <makestuff.h>
-#include <libusbwrap.h>
-#include <liberror.h>
-#include <libbuffer.h>
-#include "libfx2loader.h"
+#include <makestuff/common.h>
+#include <makestuff/libusbwrap.h>
+#include <makestuff/liberror.h>
+#include <makestuff/libbuffer.h>
+#include <makestuff/libfx2loader.h>
 #include "vendorCommands.h"
 
 #define A2_ERROR ": This firmware does not seem to support EEPROM operations - try loading an appropriate firmware into RAM first"
