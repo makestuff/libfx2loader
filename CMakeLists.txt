@@ -3,7 +3,8 @@ project(fx2loader)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
   set(LIBFX2LOADER_LIB_DIR "bin")
 else()
-  set(LIBFX2LOADER_LIB_DIR "lib")
+  include(GNUInstallDirs)
+  set(LIBFX2LOADER_LIB_DIR ${CMAKE_INSTALL_LIBDIR})
 endif()
 
 # Create a shared library
