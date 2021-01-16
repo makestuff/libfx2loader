@@ -9,4 +9,4 @@ set(APP_DEPENDS fx2loader error usbwrap buffer argtable2)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${APP_DEPENDS})
 
 # What to install
-install(TARGETS ${PROJECT_NAME} DESTINATION bin)
+install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR})
